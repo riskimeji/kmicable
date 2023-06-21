@@ -58,6 +58,7 @@ class _DashboardState extends State<Dashboard> {
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/bgLogin.jpg'),
+            // image: AssetImage('bgLogin.jpg'),
             fit: BoxFit.cover,
           ),
         ),
@@ -111,7 +112,8 @@ class _DashboardState extends State<Dashboard> {
                                       padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
                                     ),
                                     Image.asset(
-                                      'upload.png',
+                                      'assets/upload.png',
+                                      // 'upload.png',
                                       width: 150,
                                       height: 100,
                                     ),
@@ -153,7 +155,8 @@ class _DashboardState extends State<Dashboard> {
                                       padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
                                     ),
                                     Image.asset(
-                                      'logout.png',
+                                      'assets/logout.png',
+                                      // 'logout.png',
                                       width: 150,
                                       height: 100,
                                     ),

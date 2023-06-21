@@ -41,7 +41,9 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     Future<void> fetchLogin() async {
-      String url = "http://192.168.1.5/kmicable/api/auth/login.php";
+      // String url = "http://192.168.1.15/kmicable/api/auth/login.php";
+      String url =
+          "https://galonumkm.000webhostapp.com/kmicable/api/auth/login.php";
       var response = await http.post(Uri.parse(url),
           body: {'username': username.text, 'password': password.text});
       var json = jsonDecode(response.body);

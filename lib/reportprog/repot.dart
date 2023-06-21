@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:kmicable/reportprog/prog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ReportPage extends StatefulWidget {
@@ -98,7 +99,9 @@ class _ReportPageState extends State<ReportPage> {
       };
 
       // Kirim request POST ke API
-      var url = "http://192.168.1.5/kmicable/api/preg/post.php";
+      var url =
+          "https://galonumkm.000webhostapp.com/kmicable/api/preg/post.php";
+      // var url = "http://192.168.1.15/kmicable/api/preg/post.php";
       final response = await http.post(
         Uri.parse(url),
         body: formData,
@@ -132,8 +135,15 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
+  void _cetakData() {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => const ProgramPage()));
+  }
+
   Future<List<dynamic>> _fetchPesertaData() async {
-    var urls = 'http://192.168.1.5/kmicable/api/data/view_user.php';
+    // var urls = 'http://192.168.1.15/kmicable/api/data/view_user.php';
+    var urls =
+        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_user.php';
     final response = await http.get(Uri.parse(urls));
 
     if (response.statusCode == 200) {
@@ -329,6 +339,11 @@ class _ReportPageState extends State<ReportPage> {
               ElevatedButton(
                 onPressed: _addPeserta,
                 child: const Text('Tambah Peserta'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: _cetakData,
+                child: const Text('Cetak Data'),
               ),
             ],
           ),
