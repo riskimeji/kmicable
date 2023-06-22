@@ -45,7 +45,7 @@ class _DashboardState extends State<Dashboard> {
 
     void logout() async {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString('id', '');
+      prefs.setString('id', '0');
       // ignore: use_build_context_synchronously
       Navigator.pushReplacement(
         context,
@@ -112,7 +112,7 @@ class _DashboardState extends State<Dashboard> {
                                       padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
                                     ),
                                     Image.asset(
-                                      'assets/upload.png',
+                                      'assets/logoFiqPreg.png',
                                       // 'upload.png',
                                       width: 150,
                                       height: 100,
@@ -155,7 +155,7 @@ class _DashboardState extends State<Dashboard> {
                                       padding: EdgeInsets.fromLTRB(0, 5, 0, 0),
                                     ),
                                     Image.asset(
-                                      'assets/logout.png',
+                                      'assets/logoFixQuit.png',
                                       // 'logout.png',
                                       width: 150,
                                       height: 100,

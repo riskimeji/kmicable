@@ -24,6 +24,7 @@ class ProgramPageState extends State<ProgramPage> {
   String? tempat = '';
   String? materi = '';
   List<Map<String, dynamic>> peserta = [];
+  bool isLoading = false;
 
   Future<void> getId() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -50,6 +51,9 @@ class ProgramPageState extends State<ProgramPage> {
   }
 
   Future<void> _fetchData() async {
+    setState(() {
+      isLoading = true;
+    });
     try {
       // var url = "http://192.168.1.15/kmicable/api/preg/view_preg.php";
       var url =
@@ -62,6 +66,7 @@ class ProgramPageState extends State<ProgramPage> {
       var jsonData = jsonDecode(response.body);
       if (jsonData['status'] == true) {
         setState(() {
+          isLoading = false;
           tempat = jsonData['data'][0]['tempat'];
           materi = jsonData['data'][0]['materi'];
           peserta = List<Map<String, dynamic>>.from(jsonData['data'])
@@ -72,6 +77,9 @@ class ProgramPageState extends State<ProgramPage> {
               .toList();
         });
       } else {
+        setState(() {
+          isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Data tidak ditemukan'),
         ));
@@ -154,139 +162,170 @@ class ProgramPageState extends State<ProgramPage> {
       appBar: AppBar(
         title: const Text('Data Meeting'),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'Informasi Pertemuan',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(
+                        child: Text(
+                          'Informasi Pertemuan',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              const Text('Tanggal'),
-              const SizedBox(height: 8.0),
-              ElevatedButton(
-                onPressed: () => _selectDate(context),
-                child: Text(
-                  selectedDate != null
-                      ? DateFormat('yyyy-MM-dd').format(selectedDate!)
-                      : 'Pilih Tanggal',
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              const Text('Shift'),
-              const SizedBox(height: 8.0),
-              DropdownButtonFormField<String>(
-                value: selectedShift,
-                onChanged: (value) {
-                  setState(() {
-                    selectedShift = value;
-                  });
-                },
-                items: const [
-                  DropdownMenuItem(
-                    value: 'SHIFT I',
-                    child: Text('SHIFT I'),
+                  const SizedBox(height: 16.0),
+                  const Text('Tanggal'),
+                  const SizedBox(height: 8.0),
+                  ElevatedButton(
+                    onPressed: () => _selectDate(context),
+                    child: Text(
+                      selectedDate != null
+                          ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+                          : 'Pilih Tanggal',
+                    ),
                   ),
-                  DropdownMenuItem(
-                    value: 'SHIFT II',
-                    child: Text('SHIFT II'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'SHIFT III',
-                    child: Text('SHIFT III'),
-                  ),
-                ],
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  if (selectedDate != null && selectedShift != null) {
-                    _fetchData();
-                    print(
-                        'Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}');
-                    print('Selected Shift: $selectedShift');
-                    // print('Selected Place: $tempat');
-                    // print('Selected Materi: $pembahasanMateri');
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Please select date and shift'),
-                    ));
-                  }
-                },
-                child: const Text('Submit'),
-              ),
-              const SizedBox(height: 16.0),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Informasi Pertemuan',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  const SizedBox(height: 16.0),
+                  const Text('Shift'),
+                  const SizedBox(height: 8.0),
+                  DropdownButtonFormField<String>(
+                    value: selectedShift,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedShift = value;
+                      });
+                    },
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Non-Shift',
+                        child: Text('Non-Shift'),
                       ),
-                      const SizedBox(height: 8.0),
-                      Text(
-                          'Tanggal: ${selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : ''}'),
-                      Text('Shift: ${selectedShift ?? ''}'),
-                      Text('Tempat: ${tempat ?? ''}'),
-                      Text('Pembahasan Materi: ${materi ?? ''}'),
-                      const Text('Peserta dan Jabatan:'),
-                      Center(
-                        child: DataTable(
-                          columns: const [
-                            DataColumn(label: Text('No.')),
-                            DataColumn(label: Text('Peserta')),
-                            DataColumn(label: Text('Jabatan')),
-                          ],
-                          rows: peserta
-                              .asMap()
-                              .entries
-                              .map(
-                                (entry) => DataRow(
-                                  cells: [
-                                    DataCell(Text(
-                                        '${entry.key + 1}')), // Nomor baris
-                                    DataCell(Text(entry.value['nama_peserta'])),
-                                    DataCell(Text(entry.value['jabatan'])),
-                                  ],
-                                ),
-                              )
-                              .toList(),
-                        ),
+                      DropdownMenuItem(
+                        value: 'N1',
+                        child: Text('N1'),
                       ),
-                      const SizedBox(height: 16.0),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: _exportToExcel,
-                          child: const Text('Export to Excel'),
-                        ),
+                      DropdownMenuItem(
+                        value: 'Shift 1',
+                        child: Text('Shift 1'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Shift 2',
+                        child: Text('Shift 2'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Shift 3',
+                        child: Text('Shift 3'),
                       ),
                     ],
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16.0),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (selectedDate != null && selectedShift != null) {
+                        _fetchData();
+                        print(
+                            'Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}');
+                        print('Selected Shift: $selectedShift');
+                        // print('Selected Place: $tempat');
+                        // print('Selected Materi: $pembahasanMateri');
+                      } else {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text('Please select date and shift'),
+                        ));
+                      }
+                    },
+                    child: const Text('Submit'),
+                  ),
+                  const SizedBox(height: 16.0),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Center(
+                            child: Text(
+                              'Informasi Pertemuan',
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10.0),
+                          Text(
+                              'Tanggal: ${selectedDate != null ? DateFormat('yyyy-MM-dd').format(selectedDate!) : ''}'),
+                          const SizedBox(height: 4.0),
+                          Text('Shift: ${selectedShift ?? ''}'),
+                          const SizedBox(height: 4.0),
+                          Text('Tempat: ${tempat ?? ''}'),
+                          const SizedBox(height: 4.0),
+                          Text('Pembahasan Materi:\n${materi ?? ''}'),
+                          const SizedBox(height: 4.0),
+                          const Text('Peserta dan Jabatan:'),
+                          Center(
+                            child: DataTable(
+                              columns: const [
+                                DataColumn(label: Text('No.')),
+                                DataColumn(label: Text('Peserta')),
+                                DataColumn(label: Text('Jabatan')),
+                              ],
+                              rows: peserta
+                                  .asMap()
+                                  .entries
+                                  .map(
+                                    (entry) => DataRow(
+                                      cells: [
+                                        DataCell(Text(
+                                            '${entry.key + 1}')), // Nomor baris
+                                        DataCell(
+                                            Text(entry.value['nama_peserta'])),
+                                        DataCell(Text(entry.value['jabatan'])),
+                                      ],
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 16.0),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: _exportToExcel,
+                              child: const Text('Cetak Data'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          Visibility(
+            visible: isLoading,
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
