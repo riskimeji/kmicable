@@ -57,7 +57,7 @@ class _DashboardState extends State<Dashboard> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/bgLogin.jpg'),
+            image: AssetImage('assets/Login.jpg'),
             // image: AssetImage('bgLogin.jpg'),
             fit: BoxFit.cover,
           ),

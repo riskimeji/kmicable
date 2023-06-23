@@ -17,11 +17,18 @@ class _ReportPageState extends State<ReportPage> {
   DateTime? selectedDate;
   String? selectedShift;
   String? selectedPlace;
-  String? pembahasanMateri;
+  String? selectedSubMateri1;
+  String? selectedSubMateri2;
+  String? selectedSubMateri3;
+  String? pembahasanMateri1;
+  String? pembahasanMateri2;
+  String? pembahasanMateri3;
   List<PesertaData> pesertaList = [];
+  List<Materi> materiList = [];
   List<DropdownMenuItem<String>> jabatanData = [];
   List<DropdownMenuItem<String>> shiftData = [];
   List<DropdownMenuItem<String>> placeData = [];
+  List<DropdownMenuItem<String>> subMateriData = [];
 
   var idUser;
   bool isLoading = false; // Variable untuk mengontrol tampilan loading
@@ -72,7 +79,12 @@ class _ReportPageState extends State<ReportPage> {
     if (selectedDate == null ||
         selectedShift == null ||
         selectedPlace == null ||
-        pembahasanMateri == null ||
+        selectedSubMateri1 == null ||
+        selectedSubMateri2 == null ||
+        selectedSubMateri3 == null ||
+        pembahasanMateri1 == null ||
+        pembahasanMateri2 == null ||
+        pembahasanMateri3 == null ||
         pesertaList.any(
             (peserta) => peserta.peserta == null || peserta.jabatan == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -87,6 +99,21 @@ class _ReportPageState extends State<ReportPage> {
     }
     // Mengirim data ke API
     try {
+      List<Map<String, String>> materiDataList = [];
+      Materi materi1 = Materi(selectedSubMateri1, pembahasanMateri1);
+      Materi materi2 = Materi(selectedSubMateri2, pembahasanMateri2);
+      Materi materi3 = Materi(selectedSubMateri3, pembahasanMateri3);
+      materiList.add(materi1);
+      materiList.add(materi2);
+      materiList.add(materi3);
+      // materiDataList.clear();
+      for (var materi in materiList) {
+        materiDataList.add({
+          'submateri': materi.selectedSubMateri!,
+          'materi': materi.pembahasanMateri!,
+        });
+      }
+
       // Buat list yang akan menyimpan data peserta
       List<Map<String, String>> pesertaDataList = [];
 
@@ -95,6 +122,8 @@ class _ReportPageState extends State<ReportPage> {
         pesertaDataList.add({
           'nama': peserta.peserta!,
           'jabatan': peserta.jabatan!,
+          // 'submateri': peserta.submateri!,
+          // 'materi': peserta.materi!
         });
       }
 
@@ -104,9 +133,10 @@ class _ReportPageState extends State<ReportPage> {
         'shift': selectedShift!,
         'user_id': idUser!,
         'tempat': selectedPlace!,
-        'materi': pembahasanMateri!,
-        'peserta': jsonEncode(
-            pesertaDataList), // Menggunakan jsonEncode untuk mengubah list peserta menjadi JSON string
+        // 'materi': pembahasanMateri!,
+        'peserta': jsonEncode(pesertaDataList),
+        'materi': jsonEncode(
+            materiDataList) // Menggunakan jsonEncode untuk mengubah list peserta menjadi JSON string
       };
 
       // Kirim request POST ke API
@@ -121,6 +151,12 @@ class _ReportPageState extends State<ReportPage> {
       if (json['message'] != 'already') {
         setState(() {
           isLoading = false;
+          selectedSubMateri1 = null;
+          selectedSubMateri2 = null;
+          selectedSubMateri3 = null;
+          // pembahasanMateri1 = 'null';
+          // pembahasanMateri2 = 'null';
+          // pembahasanMateri3 = 'null';
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -128,6 +164,12 @@ class _ReportPageState extends State<ReportPage> {
             content: Text('Sukses Input Data'),
           ),
         );
+        Future.delayed(const Duration(seconds: 1), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ReportPage()),
+          );
+        });
       } else {
         setState(() {
           isLoading = false;
@@ -185,6 +227,29 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
+  Future<List<DropdownMenuItem<String>>> _fetchSubMateriData() async {
+    var url =
+        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_submateri.php';
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+
+      // Buat list dari DropdownMenuItem<String> dengan menggunakan map
+      List<DropdownMenuItem<String>> items = jsonData.map((item) {
+        String submateri = item['name'] as String;
+        return DropdownMenuItem<String>(
+          value: submateri,
+          child: Text(submateri),
+        );
+      }).toList();
+
+      return items;
+    } else {
+      throw Exception('Failed to fetch Sub Materi data');
+    }
+  }
+
   Future<List<DropdownMenuItem<String>>> _fetchShiftData() async {
     setState(() {
       isLoading = true;
@@ -224,10 +289,10 @@ class _ReportPageState extends State<ReportPage> {
 
       // Buat list dari DropdownMenuItem<String> dengan menggunakan map
       List<DropdownMenuItem<String>> items = jsonData.map((item) {
-        String shift = item['name'] as String;
+        String place = item['name'] as String;
         return DropdownMenuItem<String>(
-          value: shift,
-          child: Text(shift),
+          value: place,
+          child: Text(place),
         );
       }).toList();
 
@@ -269,6 +334,13 @@ class _ReportPageState extends State<ReportPage> {
     _fetchPlaceData().then((data) {
       setState(() {
         placeData = data;
+      });
+    }).catchError((error) {
+      print('An error occurred: $error');
+    });
+    _fetchSubMateriData().then((data) {
+      setState(() {
+        subMateriData = data;
       });
     }).catchError((error) {
       print('An error occurred: $error');
@@ -322,6 +394,8 @@ class _ReportPageState extends State<ReportPage> {
                     iconSize: 20,
                     isDense: true,
                     decoration: const InputDecoration(
+                      // fillColor: Colors.white.withOpacity(0.6),
+                      // filled: true,
                       border: OutlineInputBorder(),
                       contentPadding:
                           EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -337,24 +411,116 @@ class _ReportPageState extends State<ReportPage> {
                         selectedPlace = value;
                       });
                     },
-                    items:
-                        placeData, // Menggunakan shiftData yang diambil dari API
+                    items: placeData,
                     iconSize: 20,
+                    isExpanded: true, // Mengatur isExpanded menjadi true
                     isDense: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: InputDecoration(
+                      fillColor: Colors.white.withOpacity(0.6),
+                      filled: true,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
                     ),
                   ),
                   const SizedBox(height: 16.0),
-                  const Text('Pembahasan Materi'),
+                  const Text('Pembahasan Materi 1'),
                   const SizedBox(height: 8.0),
+                  DropdownButtonFormField<String>(
+                    value: selectedSubMateri1,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedSubMateri1 = value;
+                      });
+                    },
+                    items: subMateriData,
+                    iconSize: 20,
+                    isExpanded: true, // Mengatur isExpanded menjadi true
+                    isDense: true,
+                    decoration: InputDecoration(
+                      fillColor: Colors.white.withOpacity(0.6),
+                      filled: true,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 10.0),
                   TextField(
                     maxLines: null,
                     onChanged: (value) {
                       setState(() {
-                        pembahasanMateri = value;
+                        pembahasanMateri1 = value;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Masukkan pembahasan materi',
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  const Text('Pembahasan Materi 2'),
+                  const SizedBox(height: 8.0),
+                  DropdownButtonFormField<String>(
+                    value: selectedSubMateri2,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedSubMateri2 = value;
+                      });
+                    },
+                    items: subMateriData,
+                    iconSize: 20,
+                    isExpanded: true, // Mengatur isExpanded menjadi true
+                    isDense: true,
+                    decoration: InputDecoration(
+                      fillColor: Colors.white.withOpacity(0.6),
+                      filled: true,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 10.0),
+                  TextField(
+                    maxLines: null,
+                    onChanged: (value) {
+                      setState(() {
+                        pembahasanMateri2 = value;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Masukkan pembahasan materi',
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  const Text('Pembahasan Materi 3'),
+                  const SizedBox(height: 8.0),
+                  DropdownButtonFormField<String>(
+                    value: selectedSubMateri3,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedSubMateri3 = value;
+                      });
+                    },
+                    items: subMateriData,
+                    iconSize: 20,
+                    isExpanded: true, // Mengatur isExpanded menjadi true
+                    isDense: true,
+                    decoration: InputDecoration(
+                      fillColor: Colors.white.withOpacity(0.6),
+                      filled: true,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 10.0),
+                  TextField(
+                    maxLines: null,
+                    onChanged: (value) {
+                      setState(() {
+                        pembahasanMateri3 = value;
                       });
                     },
                     decoration: const InputDecoration(
@@ -392,9 +558,11 @@ class _ReportPageState extends State<ReportPage> {
                                 isExpanded:
                                     true, // Mengatur isExpanded menjadi true
                                 isDense: true,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
+                                decoration: InputDecoration(
+                                  fillColor: Colors.white.withOpacity(0.6),
+                                  filled: true,
+                                  border: const OutlineInputBorder(),
+                                  contentPadding: const EdgeInsets.symmetric(
                                       vertical: 8, horizontal: 12),
                                 ),
                               ),
@@ -412,9 +580,11 @@ class _ReportPageState extends State<ReportPage> {
                                     jabatanData, // Menggunakan jabatanData yang telah diubah ke tipe List<DropdownMenuItem<String>>
                                 iconSize: 20,
                                 isDense: true,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
+                                decoration: InputDecoration(
+                                  fillColor: Colors.white.withOpacity(0.6),
+                                  filled: true,
+                                  border: const OutlineInputBorder(),
+                                  contentPadding: const EdgeInsets.symmetric(
                                       vertical: 8, horizontal: 12),
                                 ),
                               ),
@@ -465,7 +635,23 @@ class _ReportPageState extends State<ReportPage> {
 class PesertaData {
   String? peserta;
   String? jabatan;
+  String? submateri;
+  String? materi;
   List<String>? namaPesertaList;
+  List<String>? namaMateriList;
 
-  PesertaData({this.peserta, this.jabatan, this.namaPesertaList});
+  PesertaData(
+      {this.peserta,
+      this.jabatan,
+      this.submateri,
+      this.materi,
+      this.namaMateriList,
+      this.namaPesertaList});
+}
+
+class Materi {
+  String? selectedSubMateri;
+  String? pembahasanMateri;
+
+  Materi(this.selectedSubMateri, this.pembahasanMateri);
 }

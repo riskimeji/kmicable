@@ -4,12 +4,25 @@ import 'package:kmicable/dashbord/dashboard.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   final SharedPreferences prefs = await SharedPreferences.getInstance();
+//   // var id = '0';
+//   var obtainedId = prefs.getString('id');
+//   var stateModel = StateModel(obtainedId!);
+//   // print(obtainedId);
+//   runApp(
+//     ChangeNotifierProvider<StateModel>.value(
+//       value: stateModel,
+//       child: const MyApp(),
+//     ),
+//   );
+// }
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  var id = '0';
   var obtainedId = prefs.getString('id');
-  var stateModel = StateModel(obtainedId!);
+  var stateModel = StateModel(obtainedId ?? '0'); // Add null check here
   runApp(
     ChangeNotifierProvider<StateModel>.value(
       value: stateModel,
@@ -19,7 +32,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp();
 
   @override
   Widget build(BuildContext context) {
