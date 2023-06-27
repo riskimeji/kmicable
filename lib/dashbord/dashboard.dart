@@ -37,12 +37,6 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
-    // @override
-    // void initState() {
-    //   super.initState();
-    //   getId();
-    // }
-
     void logout() async {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setString('id', '0');
@@ -119,7 +113,7 @@ class _DashboardState extends State<Dashboard> {
                                     ),
                                     const SizedBox(height: 10.0),
                                     const Text(
-                                      "Report Prog",
+                                      "Report Briefing",
                                       style: TextStyle(
                                         color: Colors.black,
                                         fontWeight: FontWeight.bold,

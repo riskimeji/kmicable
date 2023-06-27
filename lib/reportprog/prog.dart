@@ -24,9 +24,11 @@ class ProgramPageState extends State<ProgramPage> {
 
   var idUser;
   String? tempat = '';
+  // String? meetingid = '';
   String? materi = '';
   List<Map<String, dynamic>> peserta = [];
   List<Map<String, dynamic>> pembahasan = [];
+  List<Map<String, dynamic>> location = [];
   bool isLoading = false;
 
   Future<void> getId() async {
@@ -34,7 +36,6 @@ class ProgramPageState extends State<ProgramPage> {
     var idObtained = prefs.getString('id');
     setState(() {
       idUser = idObtained!;
-      print(idUser);
     });
   }
 
@@ -58,9 +59,7 @@ class ProgramPageState extends State<ProgramPage> {
       isLoading = true;
     });
     try {
-      // var url = "http://192.168.1.15/kmicable/api/preg/view_preg.php";
-      var url =
-          "https://galonumkm.000webhostapp.com/kmicable/api/preg/view_preg.php";
+      var url = "https://via-rosalina.com/api/preg/view_preg.php";
       var response = await http.post(Uri.parse(url), body: {
         'user_id': idUser.toString(),
         'date': selectedDate.toString(),
@@ -70,12 +69,16 @@ class ProgramPageState extends State<ProgramPage> {
       if (jsonData['status'] == true) {
         setState(() {
           isLoading = false;
-          tempat = jsonData['data'][0]['tempat'];
-          // materi = jsonData['data'][0]['materi'];
           peserta = List<Map<String, dynamic>>.from(jsonData['data'])
               .map((data) => {
                     'nama_peserta': data['nama_peserta'],
                     'jabatan': data['jabatan'],
+                    'meeting_id': data['meeting_id'],
+                  })
+              .toList();
+          location = List<Map<String, dynamic>>.from(jsonData['data'])
+              .map((data) => {
+                    'tempat': data['tempat'],
                   })
               .toList();
         });
@@ -97,8 +100,7 @@ class ProgramPageState extends State<ProgramPage> {
       isLoading = true;
     });
     try {
-      var url =
-          "https://galonumkm.000webhostapp.com/kmicable/api/preg/view_meeting_deatils.php";
+      var url = "https://via-rosalina.com/api/preg/view_meeting_deatils.php";
       var response = await http.post(Uri.parse(url), body: {
         'user_id': idUser.toString(),
         'date': selectedDate.toString(),
@@ -130,68 +132,101 @@ class ProgramPageState extends State<ProgramPage> {
 
   Future<void> _exportToExcel() async {
     var excel = Excel.createExcel();
-    var sheet = excel['Peserta Meeting'];
+    var sheet = excel['Data Briefing'];
 
     // Menambahkan header kolom
     var headers = [
       'Tanggal',
       'Shift',
       'Tempat',
-      'Pembahasan Materi',
-      // 'Nama Peserta'
-      // 'Jabatan'
+      'Pembahasan',
+      'Materi',
+      'Nama Peserta',
+      'Jabatan'
     ];
-    for (var row = 0; row < headers.length; row++) {
+    for (var col = 0; col < headers.length; col++) {
       sheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-          .value = headers[row];
+          .cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0))
+          .value = headers[col];
     }
 
 // Menambahkan data pertemuan
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0)).value =
+    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).value =
         DateFormat('yyyy-MM-dd').format(selectedDate!);
     sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1)).value =
         selectedShift;
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 2)).value =
-        tempat;
+
+    for (var i = 0; i < location.length; i++) {
+      var tempat = location[i]['tempat'];
+
+      // Menampilkan "Data Briefing: nomor"
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 2 * i + 1))
+          .value = 'Data Briefing: ${i + 1}';
+      // Menampilkan nilai tempat
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: 2 * i + 2))
+          .value = tempat;
+    }
 
 // Menambahkan data pembahasan materi
-    var row = headers.length;
-    for (var data in pembahasan) {
+    var row = 1;
+    var briefingIndex = 1;
+    for (var i = 0; i < pembahasan.length; i++) {
+      if (i % 3 == 0) {
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: row))
+            .value = 'Data Briefing: $briefingIndex';
+        row++;
+        briefingIndex++;
+      }
       sheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-          .value = data['submateri'];
+          .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: row))
+          .value = pembahasan[i]['submateri'];
       sheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
-          .value = data['materi'];
+          .cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: row))
+          .value = pembahasan[i]['materi'];
+      if ((i + 1) % 3 == 0) {
+        row++;
+      }
       row++;
     }
-    sheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-        .value = 'Peserta';
-    sheet
-        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
-        .value = 'Jabatan';
-    row++;
+    var rows = 1;
+    var briefingsIndex = 1;
 
-// Menambahkan data peserta dan jabatan
-    for (var data in peserta) {
+// Mengurutkan peserta berdasarkan meeting ID
+    peserta.sort((a, b) => a['meeting_id'].compareTo(b['meeting_id']));
+
+    var currentMeetingId = '';
+    for (var i = 0; i < peserta.length; i++) {
+      var meetingId = peserta[i]['meeting_id'];
+
+      if (meetingId != currentMeetingId) {
+        // Menampilkan judul Data Briefing jika meeting ID berbeda
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rows))
+            .value = 'Data Briefing: $briefingsIndex';
+        briefingsIndex++;
+        rows++;
+
+        currentMeetingId = meetingId;
+      }
+
+      // Menampilkan peserta pada meeting ID yang sama
       sheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-          .value = 'Nama Peserta';
+          .cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rows))
+          .value = peserta[i]['nama_peserta'];
       sheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
-          .value = 'Jabatan';
-      sheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-          .value = data['nama_peserta'];
-      sheet
-          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
-          .value = data['jabatan'];
-      row++;
+          .cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rows))
+          .value = peserta[i]['jabatan'];
+
+      rows++;
+
+      // Menambahkan baris kosong setelah setiap data briefing
+      if (i < peserta.length - 1 && peserta[i + 1]['meeting_id'] != meetingId) {
+        rows++;
+      }
     }
-
-    // var countRow =
 
     // Mendapatkan direktori penyimpanan aplikasi
     var directory = await getTemporaryDirectory();
@@ -215,8 +250,7 @@ class ProgramPageState extends State<ProgramPage> {
     setState(() {
       isLoading = true;
     });
-    var url =
-        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_shift.php';
+    var url = 'https://via-rosalina.com/api/data/view_shift.php';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -258,7 +292,7 @@ class ProgramPageState extends State<ProgramPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Data Meeting'),
+        title: const Text('Data Briefing'),
       ),
       body: Stack(
         children: [
@@ -324,8 +358,6 @@ class ProgramPageState extends State<ProgramPage> {
                         print(
                             'Selected Date: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}');
                         print('Selected Shift: $selectedShift');
-                        // print('Selected Place: $tempat');
-                        // print('Selected Materi: $pembahasanMateri');
                       } else {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(const SnackBar(
@@ -357,66 +389,130 @@ class ProgramPageState extends State<ProgramPage> {
                           const SizedBox(height: 4.0),
                           Text('Shift: ${selectedShift ?? ''}'),
                           const SizedBox(height: 4.0),
-                          Text('Tempat: ${tempat ?? ''}'),
-                          const Text('Pembahasan Materi: '),
                           Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SizedBox(height: 4.0),
-                              for (var entry in pembahasan.asMap().entries)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Text(
-                                    '${entry.value['submateri']}: ${entry.value['materi']}',
-                                  ),
-                                ),
+                              const Text('Tempat: '),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4.0),
+                                  for (var i = 0; i < location.length; i++)
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 8.0),
+                                          child:
+                                              Text('Data Briefing: ${(i + 1)}'),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 8.0),
+                                          child: Text(
+                                            'Tempat: ${location[i]['tempat']}',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
                             ],
                           ),
-
-                          // Center(
-                          //   child: DataTable(
-                          //     columns: const [
-                          //       DataColumn(label: Text('Pembahasan')),
-                          //       DataColumn(label: Text('Materi')),
-                          //     ],
-                          //     rows: pembahasan
-                          //         .asMap()
-                          //         .entries
-                          //         .map(
-                          //           (entry) => DataRow(
-                          //             cells: [
-                          //               DataCell(
-                          //                   Text(entry.value['submateri'])),
-                          //               DataCell(Text(entry.value['materi'])),
-                          //             ],
-                          //           ),
-                          //         )
-                          //         .toList(),
-                          //   ),
-                          // ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Pembahasan Materi: '),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4.0),
+                                  for (var i = 0; i < pembahasan.length; i++)
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (i % 3 == 0)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 8.0),
+                                            child: Text(
+                                                'Data Briefing: ${(i ~/ 3) + 1}'), // Menampilkan nomor urut di atas setiap 3 data
+                                          ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 8.0),
+                                          child: Text(
+                                            '${pembahasan[i]['submateri']}: ${pembahasan[i]['materi']}',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 4.0),
-                          const Text('Peserta dan Jabatan:'),
+                          const Text('Peserta dan Jabatan: \n'),
                           Center(
-                            child: DataTable(
-                              columns: const [
-                                DataColumn(label: Text('No.')),
-                                DataColumn(label: Text('Peserta')),
-                                DataColumn(label: Text('Jabatan')),
-                              ],
-                              rows: peserta
+                            child: Column(
+                              children: peserta
+                                  .map((pesertaData) =>
+                                      pesertaData['meeting_id'])
+                                  .toSet()
+                                  .toList()
                                   .asMap()
                                   .entries
                                   .map(
-                                    (entry) => DataRow(
-                                      cells: [
-                                        DataCell(Text(
-                                            '${entry.key + 1}')), // Nomor baris
-                                        DataCell(
-                                            Text(entry.value['nama_peserta'])),
-                                        DataCell(Text(entry.value['jabatan'])),
-                                      ],
-                                    ),
-                                  )
-                                  .toList(),
+                                (entry) {
+                                  final meetingId = entry.value;
+                                  final meetingPeserta = peserta
+                                      .where((pesertaData) =>
+                                          pesertaData['meeting_id'] ==
+                                          meetingId)
+                                      .toList();
+                                  int nomorUrutan = 1;
+
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 10),
+                                      Center(
+                                        child: Text(
+                                          'Data Briefing ${entry.key + 1}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      DataTable(
+                                        columns: const [
+                                          DataColumn(label: Text('No.')),
+                                          DataColumn(label: Text('Peserta')),
+                                          DataColumn(label: Text('Jabatan')),
+                                        ],
+                                        rows: meetingPeserta.map((pesertaData) {
+                                          final index =
+                                              peserta.indexOf(pesertaData);
+                                          final row = DataRow(
+                                            cells: [
+                                              DataCell(Text('$nomorUrutan')),
+                                              DataCell(Text(
+                                                  pesertaData['nama_peserta'])),
+                                              DataCell(
+                                                  Text(pesertaData['jabatan'])),
+                                            ],
+                                          );
+                                          nomorUrutan++;
+                                          return row;
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ).toList(),
                             ),
                           ),
                           const SizedBox(height: 16.0),

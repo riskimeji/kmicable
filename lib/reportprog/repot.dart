@@ -67,7 +67,9 @@ class _ReportPageState extends State<ReportPage> {
 
   void _removePeserta(int index) {
     setState(() {
-      pesertaList.removeAt(index);
+      if (pesertaList.length > 1) {
+        pesertaList.removeAt(index);
+      }
     });
   }
 
@@ -122,8 +124,6 @@ class _ReportPageState extends State<ReportPage> {
         pesertaDataList.add({
           'nama': peserta.peserta!,
           'jabatan': peserta.jabatan!,
-          // 'submateri': peserta.submateri!,
-          // 'materi': peserta.materi!
         });
       }
 
@@ -133,16 +133,13 @@ class _ReportPageState extends State<ReportPage> {
         'shift': selectedShift!,
         'user_id': idUser!,
         'tempat': selectedPlace!,
-        // 'materi': pembahasanMateri!,
         'peserta': jsonEncode(pesertaDataList),
         'materi': jsonEncode(
             materiDataList) // Menggunakan jsonEncode untuk mengubah list peserta menjadi JSON string
       };
 
       // Kirim request POST ke API
-      var url =
-          "https://galonumkm.000webhostapp.com/kmicable/api/preg/post.php";
-      // var url = "http://192.168.1.15/kmicable/api/preg/post.php";
+      var url = "https://via-rosalina.com/api/preg/post.php";
       final response = await http.post(
         Uri.parse(url),
         body: formData,
@@ -154,9 +151,6 @@ class _ReportPageState extends State<ReportPage> {
           selectedSubMateri1 = null;
           selectedSubMateri2 = null;
           selectedSubMateri3 = null;
-          // pembahasanMateri1 = 'null';
-          // pembahasanMateri2 = 'null';
-          // pembahasanMateri3 = 'null';
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -192,8 +186,7 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Future<List<dynamic>> _fetchPesertaData() async {
-    var urls =
-        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_user.php';
+    var urls = 'https://via-rosalina.com/api/data/view_user.php';
     final response = await http.get(Uri.parse(urls));
 
     if (response.statusCode == 200) {
@@ -205,8 +198,7 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Future<List<DropdownMenuItem<String>>> _fetchJabatanData() async {
-    var url =
-        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_jabatan.php';
+    var url = 'https://via-rosalina.com/api/data/view_jabatan.php';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -228,8 +220,7 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Future<List<DropdownMenuItem<String>>> _fetchSubMateriData() async {
-    var url =
-        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_submateri.php';
+    var url = 'https://via-rosalina.com/api/data/view_submateri.php';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -254,8 +245,7 @@ class _ReportPageState extends State<ReportPage> {
     setState(() {
       isLoading = true;
     });
-    var url =
-        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_shift.php';
+    var url = 'https://via-rosalina.com/api/data/view_shift.php';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -280,8 +270,7 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Future<List<DropdownMenuItem<String>>> _fetchPlaceData() async {
-    var url =
-        'https://galonumkm.000webhostapp.com/kmicable/api/data/view_place.php';
+    var url = 'https://via-rosalina.com/api/data/view_place.php';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -354,13 +343,6 @@ class _ReportPageState extends State<ReportPage> {
         title: const Text('Form Input Data'),
       ),
       body: Container(
-          // decoration: const BoxDecoration(
-          //   image: DecorationImage(
-          //     image: AssetImage('assets/bgLogin.jpg'),
-          //     // image: AssetImage('bgLogin.jpg'),
-          //     fit: BoxFit.cover,
-          //   ),
-          // ),
           child: Stack(
         children: [
           SingleChildScrollView(
